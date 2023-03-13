@@ -35,31 +35,47 @@ func checkErr(err error) {
 	}
 }
 
-type Test struct {
-	Testval string `json:"testval"`
+type Game struct {
+	Id          int    `json:"testval"`
+	Owner       string `json:"owner"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Date        string `json:"date"`
+	Location    string `json:"location"`
+	Variant     string `json:"variant"`
+	Max         int    `json:"max"`
 }
 
 type JsonResponse struct {
-	Type    string `json:"type"`
-	Data    []Test `json:"data"`
+	Status  string `json:"status"`
+	Data    []Game `json:"data"`
 	Message string `json:"message"`
 }
 
-func GetTest(c *gin.Context) {
+func GetGames(c *gin.Context) {
 	db := setupDB()
-	rows, err := db.Query("SELECT * FROM pgtest")
+	rows, err := db.Query("SELECT * FROM games")
 	checkErr(err)
 
-	var tests []Test
+	var games []Game
 
 	for rows.Next() {
-		var testval string
-		err = rows.Scan(&testval)
+		var id int
+		var owner string
+		var title string
+		var description string
+		var date string
+		var location string
+		var variant string
+		var max int
+		err = rows.Scan(&id, &owner, &title, &description, &date, &location, &variant, &max)
 		checkErr(err)
-		tests = append(tests, Test{Testval: testval})
+		games = append(
+			games,
+			Game{Id: id, Owner: owner, Title: title, Description: description, Date: date, Location: location, Variant: variant, Max: max})
 	}
 
-	var response = JsonResponse{Type: "success", Data: tests}
+	var response = JsonResponse{Status: "success", Data: games}
 
 	c.JSON(http.StatusOK, response)
 }
@@ -68,7 +84,7 @@ func main() {
 	r := gin.Default()
 	r.Use(cors.Default())
 
-	r.GET("/ping", GetTest)
+	r.GET("/games", GetGames)
 
 	r.Run()
 }
